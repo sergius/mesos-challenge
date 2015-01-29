@@ -5,7 +5,17 @@ abstract class Elevator extends Simulation {
   def timePerFloorDelay: Int
   def timePerStopDelay: Int
 
-  class Direction {
+  object Direction {
+    def apply(init: Int, dest: Int) =
+      if (init < dest) Up
+      else Down
+  }
+
+  sealed trait Direction
+  object Up extends Direction
+  object Down extends Direction
+
+  case class Movement(dir: Direction) {
 
     private var floor: Int = 0
     private var dest: Int = 0
@@ -13,11 +23,11 @@ abstract class Elevator extends Simulation {
 
     def getFloor = floor
     def destFloor = dest
+    def isStopped = actions.isEmpty
 
     def setFloor(f: Int) =
       if (f != floor) {
         floor = f
-        actions foreach(_())
       }
 
     def addAction(a: Action, destFloor: Int): Unit = {
@@ -27,34 +37,34 @@ abstract class Elevator extends Simulation {
     }
   }
 
-  def floorIndicator(d: Direction, floor: Int): Unit = {
+  def floorIndicator(m: Movement, floor: Int): Unit = {
     def indicatorAction(): Unit = {
-      afterDelay(timePerFloorDelay) {
-        d.setFloor(floor)
-        println(s"*** Passing floor ${d.getFloor}")
+      accordingToMovement(timePerFloorDelay) {
+        m.setFloor(floor)
+        println(s"*** Passing floor ${m.getFloor}")
       }
     }
-    d addAction(indicatorAction, d.destFloor)
+    m addAction(indicatorAction, m.destFloor)
   }
   
-  def stop(floor: Int, d: Direction): Unit = {
+  def stop(m: Movement, floor: Int): Unit = {
       def stopAction(): Unit = {
-        afterDelay(timePerStopDelay) {
-          println(s"*** Stopped at floor ${d.getFloor}")
+        accordingToMovement(timePerStopDelay) {
+          println(s"*** Stopped at floor ${m.getFloor}")
         }
       }
-    d addAction(stopAction, d.destFloor)
+    m addAction(stopAction, m.destFloor)
   }
   
-  def move(flInit: Int, flDest: Int, d: Direction): Unit = {
+  def move(m: Movement, flInit: Int, flDest: Int): Unit = {
     def moveAction(): Unit = {
       val range =
-      if (flInit < flDest) flInit until flDest
-      else flInit until flDest by -1
+      if (flInit < flDest) flInit until flDest + 1
+      else flInit until flDest - 1 by -1
 
-      range foreach(f => floorIndicator(d, f))
-      stop(flDest, d)
+      range foreach(f => floorIndicator(m, f))
+      stop(m, flDest)
     }
-    d addAction(moveAction, flDest)
+    m addAction(moveAction, flDest)
   }
 }
