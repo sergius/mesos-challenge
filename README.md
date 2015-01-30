@@ -38,6 +38,6 @@ This is the detail which I didn't quite realise from the start and lost a good p
 
 I tried to keep the code as good as possible. Nevertheless, in the rush it's not a priority, thus the code is definitely improvable in many senses.
 
-** How to test whats's done**
+**How to test whats's done**
 
 Had no time for proper tests, though tried to do something. Nevertheless, in the test directory there is a file `ElevatorSpec` where I started "testing": actually running the simulation and watching its traces.
