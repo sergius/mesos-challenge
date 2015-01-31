@@ -1,5 +1,6 @@
 package simulation
 
+@deprecated
 trait Parameters {
 
   def maxFloors = 10
