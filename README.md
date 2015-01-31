@@ -7,12 +7,12 @@
 
 ### Elevator control
 
-The the purpose of an elevator control actually consists in producing a sequence of stops.
+The purpose of an elevator control actually consists in producing a sequence of stops.
 The elevator only has 2 states: *stopped* and *in movement*. The elevator has no notion of any calls or business logic. It only understands when the stops are to be made and that it has to move from stop to stop, till the last indicated one. Therefore, our task is actually to produce the correct sequence of stops.
 
 ### Simulation (DES)
 
-The proposed simulation is going to be a [Discrete event simulation](http://en.wikipedia.org/wiki/Discrete_event_simulation) (as opposed to [Continuous simulation](http://en.wikipedia.org/wiki/Continuous_simulation)), which means that it has to *"... model the operation of a system as a discrete sequence of events in time. Each event occurs at a particular instant in time and marks a change of state in the system. Between consecutive events, no change in the system is assumed to occur; thus the simulation can directly jump in time from one event to the next."*
+The proposed simulation is going to be a [Discrete event simulation](http://en.wikipedia.org/wiki/Discrete_event_simulation), which means that it has to *"... model the operation of a system as a discrete sequence of events in time. Each event occurs at a particular instant in time and marks a change of state in the system. Between consecutive events, no change in the system is assumed to occur; thus the simulation can directly jump in time from one event to the next."*
 
 Thus, a simulation is going to be fully programmed before being run. Events may be programmed to occur with certain delay or at a particular moment in time, but no dynamic behaviour is being considered.
 
