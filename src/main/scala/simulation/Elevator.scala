@@ -1,5 +1,6 @@
 package simulation
 
+@deprecated
 abstract class Elevator extends Simulation {
 
   def timePerFloorDelay: Int
