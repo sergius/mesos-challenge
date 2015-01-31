@@ -3,6 +3,7 @@ package simulation
 /**
  * Elevator control for one elevator
  */
+@deprecated
 abstract class ElevatorControl extends Elevator {
 
   def maxFloors: Int
