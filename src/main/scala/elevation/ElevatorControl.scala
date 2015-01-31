@@ -9,6 +9,9 @@ package elevation
 //TODO A function should be added to add connection between the end of one movement and the beginning of next
 abstract class ElevatorControl(val elevator: Elevator) {
 
+  //TODO See if self-typing is better
+  //this: Elevator =>
+
   private var allMoves = List.empty[Movement]
   
   def movements = allMoves
