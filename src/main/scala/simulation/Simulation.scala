@@ -1,5 +1,6 @@
 package simulation
 
+@deprecated
 abstract class Simulation {
 
   type Action = () => Unit
