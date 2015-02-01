@@ -1,8 +1,10 @@
 package elevation
 
-abstract class Elevator {
+trait Elevator {
+  this: Simulation =>
 
-  private var currFloor = 0
+  val perFloorDuration = 1
+  val perStopDuration = 2
 
-  def currentFloor = currFloor
+  var currentFloor = 0
 }

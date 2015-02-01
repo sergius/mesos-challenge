@@ -5,7 +5,7 @@ import scala.util.{Success, Try}
 /**
  * Helps recording and executing a discrete event simulation
  */
-abstract class Simulation {
+trait Simulation {
 
   private var timeline = List.empty[Instant]
   private var tlCursor = 0 //indicates the current instant: to be created or modified

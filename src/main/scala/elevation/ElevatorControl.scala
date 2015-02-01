@@ -4,13 +4,10 @@ package elevation
  * A unit of control of one elevator. Its main purpose is to compute
  * elevators series of movements according to incoming requests and
  * the direction taken
- * @param elevator The elevator under control
  */
 //TODO A function should be added to add connection between the end of one movement and the beginning of next
-abstract class ElevatorControl(val elevator: Elevator) {
-
-  //TODO See if self-typing is better
-  //this: Elevator =>
+abstract class ElevatorControl {
+  this: Elevator with Simulation =>
 
   private var allMoves = List.empty[Movement]
   
@@ -81,16 +78,8 @@ abstract class ElevatorControl(val elevator: Elevator) {
 
     //TODO ATTENTION: Doesn't count with race condition in dynamic environment
 
-    if (allMoves.isEmpty && elevator.currentFloor != initFloor) {
-      allMoves :+= new Movement(elevator.currentFloor, initFloor)
       addMove(initFloor, destFloor)
-    } else {
-      addMove(initFloor, destFloor)
-    }
-
-
   }
-
 
   private def addMove(init: Int, dest: Int) = {
 
@@ -106,6 +95,36 @@ abstract class ElevatorControl(val elevator: Elevator) {
       case Some(m) => m.add(init, dest)
       case _ => allMoves :+= new Movement(init, dest)
     }
+  }
+
+  def stopAt(floor: Int) = {
+    val action = Action("Stopping", {
+      println(s"*** Stopped at floor $floor")
+    }, perStopDuration)
+    addToAgenda(action)
+  }
+
+  def floorIndication(floor: Int) = {
+    val action = Action("Moving  ", {
+      println(s"*** Moving  by floor $floor")
+    }, perFloorDuration)
+    addToAgenda(action)
+  }
+
+  def prepareMovements(): Unit = {
+    allMoves foreach (m => {
+      m.stops foreach (stop => {
+        val floors =
+          if (currentFloor < stop) currentFloor until stop
+          else currentFloor until stop by -1
+        floors foreach {
+          f => floorIndication(f)
+            currentFloor = f
+        }
+        stopAt(stop)
+        currentFloor = stop
+      })
+    })
   }
 
 }
