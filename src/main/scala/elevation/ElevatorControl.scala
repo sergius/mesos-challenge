@@ -5,14 +5,23 @@ package elevation
  * elevators series of movements according to incoming requests and
  * the direction taken
  */
-//TODO A function should be added to add connection between the end of one movement and the beginning of next
-abstract class ElevatorControl {
+abstract class ElevatorControl(val id: Int) {
   this: Elevator with Simulation =>
 
   private var allMoves = List.empty[Movement]
   
   def movements = allMoves
 
+  def getCurrentFloor = currentFloor
+  def setCurrentFloor(floor: Int): Unit = currentFloor = floor
+
+  def simStep(): Unit = stepAgenda()
+  def simRun(): Unit = run()
+
+  def reset(): Unit = {
+    currentFloor = 0
+    simReset()
+  }
   /**
    * Represents a one direction movement that the elevator takes and
    * doesn't stop till finishing the requests in the same direction or
@@ -69,14 +78,11 @@ abstract class ElevatorControl {
 
   /**
    * Updates the list of movements, according to elevator's position
-   * and movement direction
+   * and movement direction.
    * @param initFloor Initial floor
    * @param destFloor Destination floor
-   * @return
    */
   def pickup(initFloor: Int, destFloor: Int): Unit = {
-
-    //TODO ATTENTION: Doesn't count with race condition in dynamic environment
 
       addMove(initFloor, destFloor)
   }
@@ -99,14 +105,14 @@ abstract class ElevatorControl {
 
   def stopAt(floor: Int) = {
     val action = Action("Stopping", {
-      println(s"*** Stopped at floor $floor")
+      println(s"El#$id: Stopped at floor $floor")
     }, perStopDuration)
     addToAgenda(action)
   }
 
   def floorIndication(floor: Int) = {
     val action = Action("Moving  ", {
-      println(s"*** Moving  by floor $floor")
+      println(s"El#$id: Moving  by floor $floor")
     }, perFloorDuration)
     addToAgenda(action)
   }

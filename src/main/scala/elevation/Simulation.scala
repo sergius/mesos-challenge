@@ -8,11 +8,16 @@ import scala.util.{Success, Try}
 trait Simulation {
 
   private var timeline = List.empty[Instant]
-  private var tlCursor = 0 //indicates the current instant: to be created or modified
+  private var tmlnCursor = 0 //indicates the current instant: to be created or modified
   private var now = 0
 
   def currentTime = now
   def agenda = timeline
+  def simReset(): Unit = {
+    timeline = List.empty[Instant]
+    tmlnCursor = 0
+    now = 0
+  }
 
   object Action {
     def apply(name: String, block: => Unit, duration: Int) = new Action(name, block, duration)
@@ -49,9 +54,25 @@ trait Simulation {
   }
 
   def run(): Unit = {
-    val initAction = Action("Simulation", println("starting..."), 1)
-    timeline +:= Instant(Event(initAction.name, initAction.effect))
-    runLoop()
+    if (timeline isEmpty) println("*** Can't run, agenda empty")
+    else {
+      prepareForRun()
+      runLoop()
+    }
+  }
+
+  def stepAgenda(): Unit = {
+    if (timeline isEmpty) println("*** Can't run, agenda empty")
+    else {
+      stepTimeline()
+    }
+  }
+
+  private def prepareForRun(): Unit = {
+    val startAction = Action("Simulation", println("starting..."), 1)
+    val finishAction = Action("Simulation", println("finished!"), 1)
+    timeline +:= Instant(Event(startAction.name, startAction.effect))
+    timeline :+= Instant(Event(startAction.name, finishAction.effect))
   }
 
   /**
@@ -74,23 +95,23 @@ trait Simulation {
     else addForDuration()
 
     def addWithDelay(d: Int) = {
-      val currCursor = tlCursor
+      val currCursor = tmlnCursor
       val advCursor = currCursor + d
 
       Try(timeline(advCursor)) match {
         case Success(instant) =>
-          tlCursor = advCursor
+          tmlnCursor = advCursor
           addForDuration()
         case _ =>
           fillWithEmptyFor(delay)
           addForDuration()
       }
-      tlCursor = currCursor
+      tmlnCursor = currCursor
 
       def fillWithEmptyFor(i: Int) = {
         0 until i foreach {
           t => { timeline :+= Instant.empty
-            tlCursor += 1 }
+            tmlnCursor += 1 }
         }
       }
     }
@@ -99,13 +120,13 @@ trait Simulation {
       val newEvent: Event = Event(action.name, action.effect)
       val duration = action.duration
       0 until duration foreach { t => {
-          Try(timeline(tlCursor)) match {
+          Try(timeline(tmlnCursor)) match {
             case Success(instant) =>
               instant.addEvent(newEvent)
             case _ =>
               timeline :+= Instant(newEvent)
           }
-          tlCursor += 1
+          tmlnCursor += 1
         }
       }
     }
@@ -120,6 +141,17 @@ trait Simulation {
       }
       now += 1
       runLoop()
+    case _ =>
+  }
+
+  private def stepTimeline(): Unit = timeline match {
+    case instant :: rest =>
+      timeline = rest
+      instant.events foreach {
+        e => printEvent(e)
+          e.effect()
+      }
+      now += 1
     case _ =>
   }
 

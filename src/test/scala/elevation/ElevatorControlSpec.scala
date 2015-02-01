@@ -10,7 +10,7 @@ class ElevatorControlSpec extends WordSpecLike with Matchers {
       "produce a sequence of 1 movement with 2 stops (initFloor counts 1)" in {
       val initFloor = 0
       val destFloor = 5
-      object ec extends ElevatorControl with Elevator with Simulation
+      object ec extends ElevatorControl(1) with Elevator with Simulation
 
       ec.currentFloor shouldEqual initFloor
 
@@ -30,7 +30,7 @@ class ElevatorControlSpec extends WordSpecLike with Matchers {
       "when the direction from stops `currentFloor` to 1 is the SAME as from 1 to 2" in {
       val initFloor = 3
       val destFloor = 6
-      object ec extends ElevatorControl with Elevator with Simulation
+      object ec extends ElevatorControl(1) with Elevator with Simulation
       ec.currentFloor = initFloor - 2
 
       ec.currentFloor should not equal initFloor
@@ -51,7 +51,7 @@ class ElevatorControlSpec extends WordSpecLike with Matchers {
       "when the direction from stops `currentFloor` to 1 is DIFFERENT as from 1 to 2" in {
       val initFloor = 3
       val destFloor = 6
-      object ec extends ElevatorControl with Elevator with Simulation
+      object ec extends ElevatorControl(1) with Elevator with Simulation
       ec.currentFloor = initFloor + 2
 
       ec.currentFloor should not equal initFloor
@@ -72,7 +72,7 @@ class ElevatorControlSpec extends WordSpecLike with Matchers {
       val pickups = List((3, 6), (4, 10), (6, 8))
       val initFloor = pickups(0)._1
 
-      object ec extends ElevatorControl with Elevator with Simulation
+      object ec extends ElevatorControl(1) with Elevator with Simulation
       ec.currentFloor = pickups(0)._1
 
       ec.currentFloor shouldEqual initFloor
@@ -94,7 +94,7 @@ class ElevatorControlSpec extends WordSpecLike with Matchers {
       val pickups = List((3, 6), (6, 1), (4, 10))
       val initFloor = pickups(0)._1
 
-      object ec extends ElevatorControl with Elevator with Simulation
+      object ec extends ElevatorControl(1) with Elevator with Simulation
       ec.currentFloor = pickups(0)._1
 
       ec.currentFloor shouldEqual initFloor
@@ -121,7 +121,7 @@ class ElevatorControlSpec extends WordSpecLike with Matchers {
     "prepare correct agenda for pickups in same direction" in {
       val pickups = List((3, 6), (4, 10), (6, 8))
 
-      object ec extends ElevatorControl with Elevator with Simulation
+      object ec extends ElevatorControl(1) with Elevator with Simulation
       import ec._
 
       val initFloor = ec.currentFloor
@@ -143,7 +143,7 @@ class ElevatorControlSpec extends WordSpecLike with Matchers {
     "prepare correct agenda for pickups in both directions" in {
       val pickups = List((3, 6), (6, 1), (4, 10))
 
-      object ec extends ElevatorControl with Elevator with Simulation
+      object ec extends ElevatorControl(1) with Elevator with Simulation
       import ec._
 
       ec.currentFloor = 5
