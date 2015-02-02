@@ -9,6 +9,43 @@
 The purpose of an elevator control actually consists in producing a sequence of stops.
 The elevator only has 2 states: *stopped* and *in movement*. The elevator has no notion of any calls or business logic. It only understands when the stops are to be made and that it has to move from stop to stop, till the last indicated one. Therefore, our task is actually to produce the correct sequence of stops.
 
+### Scheduling
+
+The most interesting part of the task is scheduling. The following algorithm has been chosen.
+
+#### One elevator
+
+Every single elevator serves the requests, according to the following rules:
+
+ 1. The first one is served first. FCFS
+ 2. As the elevator starts moving (either up or down) it will keep serving all the requests made in the same direction of movement. Obviously, with the condition that the requests must be received before elevator have passed the initial floor.
+ 3. The requests in the opposite direction aren't lost. They are being stored for next movement.
+ 4. When all the requests in one direction are served or the limit of movement is reached, the elevator starts moving in the opposite direction, serving all the requests stored before and those which are being made in time during the movement.
+ 5. The same routine keeps repeating while pickup requests are received.
+
+#### Multiple elevators
+
+When a pickup request arrives to a centre which controls several elevators, the pickup is assigned to the elevator with the shortest path to the pickup's initial floor. It's being computed the following way:
+
+ 1. Is being checked the condition that the pickup initial floor is situated between elevator's current floor and its next stop, taking the direction of movement into consideration. It means that the case when the described condition is `true` but the elevator moves in the direction opposite to the pickup, it counts as `false`
+ 2. If the condition in p. 1 is `true`, the number of floors (difference between elevator's current floor and the pickup initial floor) is returned.
+ 3. If the condition is `false`, the same is checked for the next step: checking if the pickup initial floor is situated between the next stop and the further one.
+ 4. While the condition is `false` the number of floors is being accumulated.
+ 5. The same routine is repeated till the condition is `true` or the elevator has no more stops planned.
+
+ For example, we have an elevator with already `N` planned stops when it receives a pickup request `pickup(x, y)` (`x` is initial floor, `y` is destination floor)
+
+ 1. Is being checked if the `currentFloor < x < nextStop1` (for a movement up, or ascending)
+ 2. Suppose it's not. Then we record the the number `diff = (nextStop1 - currentFloor).abs` *(note that for descending direction the `diff` could result negative, therefore we count the absolute value of the difference)*
+ 3. We check further: `nextStop1 < x < nextStop2`. `false` again? `diff += (nextStop2 - nextStop1).abs`
+ 4. Say the next time we check and discover that `nextStop2 < x < nextStop3` is `true`. Then we sum `diff += (x - nextStop2).abs` and `diff` will be the path which the elevator has to run before it could serve this pickup request.
+
+ The elevator with the shortest path will be assigned the request.
+
+ *Note: In real dynamic conditions, this implementation might have a race condition problem. I would like to mention that an implementation for real world would execute these computations in parallel or, even better, the parallelism could be provided by an implementation based on an actors system, e.g. Akka.*
+
+
+
 ### Simulation (DES)
 
 The proposed simulation is going to be a [Discrete event simulation](http://en.wikipedia.org/wiki/Discrete_event_simulation), which means that it has to *"... model the operation of a system as a discrete sequence of events in time. Each event occurs at a particular instant in time and marks a change of state in the system. Between consecutive events, no change in the system is assumed to occur; thus the simulation can directly jump in time from one event to the next."*
