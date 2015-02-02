@@ -18,7 +18,7 @@ The most interesting part of the task is scheduling. The following algorithm has
 Every single elevator serves the requests, according to the following rules:
 
  1. The first to come is served first. FCFS
- 2. As the elevator starts moving (either up or down) it will keep serving all the requests made in the same direction of movement. Obviously, with the condition that the requests must be received before elevator have passed the initial floor.
+ 2. As the elevator starts moving (either up or down) it will keep serving all the requests made in the same direction of movement. Obviously, with the condition that the requests must be received before the elevator has passed the request's initial floor.
  3. The requests in the opposite direction aren't lost. They are being stored for next movement.
  4. When all the requests in one direction are served or the limit of movement is reached, the elevator starts moving in the opposite direction, serving all the requests stored before and those which are being made in time during the movement.
  5. The same routine keeps repeating while pickup requests are received.
@@ -33,11 +33,12 @@ When a pickup request arrives to a centre which controls several elevators, the 
  4. While the condition is `false` the number of floors is being accumulated.
  5. The same routine is repeated till the condition is `true` or the elevator has no more stops planned.
 
+
  For example, we have an elevator with already `N` planned stops when it receives a pickup request `pickup(x, y)` (`x` is initial floor, `y` is destination floor)
 
  1. Is being checked if the `currentFloor < x < nextStop1` (for a movement up, or ascending)
- 2. Suppose it's not. Then we record the the number `diff = (nextStop1 - currentFloor).abs` *(note that for descending direction the `diff` could result negative, therefore we count the absolute value of the difference)*
- 3. We check further: `nextStop1 < x < nextStop2`. `false` again? `diff += (nextStop2 - nextStop1).abs`
+ 2. Suppose it's not. Then we record the number `diff = (nextStop1 - currentFloor).abs` *(note that for descending direction the `diff` could result negative, therefore we count the absolute value of the difference)*
+ 3. We check further: `nextStop1 < x < nextStop2`. `False` again? Then `diff += (nextStop2 - nextStop1).abs`
  4. Say the next time we check and discover that `nextStop2 < x < nextStop3` is `true`. Then we sum `diff += (x - nextStop2).abs` and `diff` will be the path which the elevator has to run before it could serve this pickup request.
 
  The elevator with the shortest path will be assigned the request.
