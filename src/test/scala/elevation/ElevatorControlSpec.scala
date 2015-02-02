@@ -116,9 +116,10 @@ class ElevatorControlSpec extends WordSpecLike with Matchers {
   }
 
 
-  "When a series of several pickup call are made, ElevatorControl" should {
+  "When a series of several pickup calls are made, ElevatorControl" should {
 
     "prepare correct agenda for pickups in same direction" in {
+
       val pickups = List((3, 6), (4, 10), (6, 8))
 
       object ec extends ElevatorControl(1) with Elevator with Simulation
@@ -130,17 +131,18 @@ class ElevatorControlSpec extends WordSpecLike with Matchers {
       ec.pickup(pickups(1)._1, pickups(1)._2)
       ec.pickup(pickups(2)._1, pickups(2)._2)
 
-      ec.prepareMovements()
+      ec.updateAgenda()
 
       movements should have size 1
       val stops = movements.head.stops
       val expectedSize = stops.size * perStopDuration + (stops.last - initFloor).abs * perFloorDuration
       ec.agenda should have size expectedSize
 
-      ec.run()
+      ec.run() // this is to actually see the traces
     }
 
     "prepare correct agenda for pickups in both directions" in {
+
       val pickups = List((3, 6), (6, 1), (4, 10))
 
       object ec extends ElevatorControl(1) with Elevator with Simulation
@@ -153,7 +155,7 @@ class ElevatorControlSpec extends WordSpecLike with Matchers {
       ec.pickup(pickups(1)._1, pickups(1)._2)
       ec.pickup(pickups(2)._1, pickups(2)._2)
 
-      ec.prepareMovements()
+      ec.updateAgenda()
 
       movements should have size 2
 
@@ -166,6 +168,134 @@ class ElevatorControlSpec extends WordSpecLike with Matchers {
       ec.agenda should have size (totalStops * perStopDuration + traversedFloors * perFloorDuration)
 
       ec.run()
+    }
+  }
+
+  "When stepping through a simulation, ElevatorControl" should {
+
+    "update the simulation, according to past floors" in {
+      val pickups = List((3, 6), (6, 1), (4, 10))
+
+      object ec extends ElevatorControl(1) with Elevator with Simulation
+      import ec._
+
+      ec.currentFloor = 5
+      val initFloor = ec.currentFloor
+
+      ec.pickup(pickups(0)._1, pickups(0)._2)
+      ec.pickup(pickups(1)._1, pickups(1)._2)
+      ec.pickup(pickups(2)._1, pickups(2)._2)
+
+      ec.movements should have size 2
+      ec.movements(0).stops should contain inOrder(3, 4, 6, 10)
+      ec.movements(1).stops should contain inOrder(6, 1)
+
+      ec.updateAgenda()
+
+      val stepsToPassStop1 = (initFloor - movements(0).stops.head).abs * perFloorDuration  + perStopDuration
+
+      0 until stepsToPassStop1 foreach(n => ec.stepSimulation())
+
+      ec.movements(0).stops should contain inOrder(4, 6, 10)
+    }
+
+    "update the simulation, according to past floors and pickup calls, " +
+      "in SAME direction, received while stepping" in {
+      val pickups = List((3, 6), (6, 1), (4, 10))
+
+      object ec extends ElevatorControl(1) with Elevator with Simulation
+      import ec._
+
+      ec.currentFloor = 5
+      val initFloor = ec.currentFloor
+
+      ec.pickup(pickups(0)._1, pickups(0)._2)
+      ec.pickup(pickups(1)._1, pickups(1)._2)
+      ec.pickup(pickups(2)._1, pickups(2)._2)
+
+      ec.movements should have size 2
+      ec.movements(0).stops should contain inOrder(3, 4, 6, 10)
+      ec.movements(1).stops should contain inOrder(6, 1)
+
+      ec.updateAgenda()
+
+      currentFloor shouldEqual initFloor
+      val futureCurrentFloor = ec.movements(0).stops.head
+
+      val stepsToPassStop1 = (initFloor - movements(0).stops.head).abs * perFloorDuration  + perStopDuration
+      0 until stepsToPassStop1 foreach(n => ec.stepSimulation())
+
+      ec.movements(0).stops should contain inOrder(4, 6, 10)
+      currentFloor shouldEqual futureCurrentFloor
+
+      ec.pickup(5, 8)
+      updateAgenda()
+
+      ec.movements(0).stops should contain inOrder(4, 5, 6, 8, 10)
+      currentFloor shouldEqual futureCurrentFloor
+    }
+
+    "update the simulation, according to past floors and pickup calls, " +
+      "in DIFFERENT direction, received while stepping" in {
+      val pickups = List((3, 6), (6, 1), (4, 10))
+
+      object ec extends ElevatorControl(1) with Elevator with Simulation
+      import ec._
+
+      ec.currentFloor = 2
+      val initFloor = ec.currentFloor
+
+      ec.pickup(pickups(0)._1, pickups(0)._2)
+      ec.pickup(pickups(1)._1, pickups(1)._2)
+      ec.pickup(pickups(2)._1, pickups(2)._2)
+
+      ec.movements should have size 2
+      ec.movements(0).stops should contain inOrder(3, 4, 6, 10)
+      ec.movements(1).stops should contain inOrder(6, 1)
+
+      ec.updateAgenda()
+
+      currentFloor shouldEqual initFloor
+      val futureCurrentFloor = ec.movements(0).stops.head
+
+      val stepsToPassStop1 = (initFloor - movements(0).stops.head).abs * perFloorDuration  + perStopDuration
+      0 until stepsToPassStop1 foreach(n => ec.stepSimulation())
+
+      currentFloor shouldEqual futureCurrentFloor
+
+      ec.pickup(8, 2)
+      updateAgenda()
+
+      ec.movements(0).stops should contain inOrder(4, 6, 10)
+      ec.movements(1).stops should contain inOrder(8, 6, 2, 1)
+      currentFloor shouldEqual futureCurrentFloor
+    }
+
+    "when the simulation is over, the movements' list should be empty and current floor" in {
+      val pickups = List((3, 6))
+
+      object ec extends ElevatorControl(1) with Elevator with Simulation
+      import ec._
+
+      ec.currentFloor = 2
+      val initFloor = ec.currentFloor
+
+      ec.pickup(pickups(0)._1, pickups(0)._2)
+      ec.updateAgenda()
+
+      currentFloor shouldEqual initFloor
+      val futureCurrentFloor = ec.movements(0).stops.last
+
+      val traversedFloors = (initFloor - movements(0).stops.head).abs +
+        movements.map(m => (m.stops.last - m.stops.head).abs).sum
+
+      val totalStops = movements.map(m => m.stops).flatten.size
+
+      val stepsToFinish = totalStops * perStopDuration + traversedFloors * perFloorDuration
+      0 until stepsToFinish foreach(n => ec.stepSimulation())
+
+      currentFloor shouldEqual futureCurrentFloor
+      ec.movements shouldEqual List.empty[Int]
     }
   }
 }

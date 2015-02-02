@@ -9,14 +9,43 @@ abstract class ElevatorControl(val id: Int) {
   this: Elevator with Simulation =>
 
   private var allMoves = List.empty[Movement]
+  private val StopActionName = "Stopping"
   
   def movements = allMoves
 
   def getCurrentFloor = currentFloor
   def setCurrentFloor(floor: Int): Unit = currentFloor = floor
+  def perFloorDuration: Int
+  def perStopDuration: Int
 
-  def simStep(): Unit = stepAgenda()
-  def simRun(): Unit = run()
+  /**
+   * Steps through the timeline of simulation agenda.
+   * At each step checks if it is a Stop action and
+   * if so, removes "next stop": first stop in the first movement.
+   * Thus, if at a certain point of stepping through the
+   * simulation a new `pickup()` is received, it will be
+   * processed according to the current status and the
+   * simulation will be updated.
+   */
+  def stepSimulation(): Unit = {
+    
+    removeStop(stepAgenda())
+
+    def removeStop(doneActions: List[String]): Unit = {
+      doneActions foreach { s =>
+        if (s == StopActionName) 
+          allMoves.head.dropStop() match {
+            case Nil if allMoves.size > 1 =>
+              allMoves = allMoves.tail
+              allMoves.head.dropStop()
+            case Nil => allMoves = List.empty[Movement]
+            case _ =>
+          }
+      }
+    }
+  }
+
+  def runSimulation(): Unit = run()
 
   def reset(): Unit = {
     currentFloor = 0
@@ -39,6 +68,11 @@ abstract class ElevatorControl(val id: Int) {
     private var stopsList = List(initFloor, destFloor)
 
     def stops = stopsList
+
+    def dropStop(): List[Int] = {
+      stopsList = stopsList.tail
+      stopsList
+    }
 
     /**
      * Adds to the movement new stop points that represent the origin and
@@ -77,8 +111,10 @@ abstract class ElevatorControl(val id: Int) {
   }
 
   /**
-   * Updates the list of movements, according to elevator's position
+   * Updates the list of planned movements, according to elevator's position
    * and movement direction.
+   * **Note:** After creating the simulation with `pickup()`, `updateAgenda()`
+   * *must* be called before executing the simulation either with `step()` or `run()`
    * @param initFloor Initial floor
    * @param destFloor Destination floor
    */
@@ -103,21 +139,32 @@ abstract class ElevatorControl(val id: Int) {
     }
   }
 
-  def stopAt(floor: Int) = {
-    val action = Action("Stopping", {
+  private def stopAt(floor: Int) = {
+    val action = Action(StopActionName, {
+      currentFloor = floor
       println(s"El#$id: Stopped at floor $floor")
     }, perStopDuration)
     addToAgenda(action)
   }
 
-  def floorIndication(floor: Int) = {
+  private def floorIndication(floor: Int) = {
     val action = Action("Moving  ", {
+      currentFloor = floor
       println(s"El#$id: Moving  by floor $floor")
     }, perFloorDuration)
     addToAgenda(action)
   }
 
-  def prepareMovements(): Unit = {
+  /**
+   * Updates simulation agenda with the recorded
+   * `Movement`s. Note that the previous or current
+   * simulation (agenda) will be totally cleared.
+   */
+  def updateAgenda(): Unit = {
+    val remember = currentFloor
+
+    simReset()
+    
     allMoves foreach (m => {
       m.stops foreach (stop => {
         val floors =
@@ -131,6 +178,8 @@ abstract class ElevatorControl(val id: Int) {
         currentFloor = stop
       })
     })
+
+    currentFloor = remember
   }
 
 }

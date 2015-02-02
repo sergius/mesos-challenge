@@ -1,9 +1,8 @@
 # Mesos-challenge
 
-## Second attack
+## Second attack: development from scratch (centered in the algorithm, not simulation)
 *(package `elevation`)*
 
-## Development from scratch, centered in the algorithm (not simulation)
 
 ### Elevator control
 
@@ -20,7 +19,7 @@ For convenience and as a way to watch the simulation's execution, traces (`print
 
 #### Programming a simulation
 
-*Note: the time is measured in conventional time units, which are just integer values and represent instants in the timeline of the simulation. The values of `duration` and `delay` are of this type. More than one event can be programmed for the same instant.*
+*Note: the time is measured in conventional time units, which are just integer values and represent instants in the timeline of the simulation. The values of `duration` and `delay` are of this type. More than one event can be programmed for the same instant. Delays are available, but aren't used in the proposed application*
 
 To program a simulation, actions should be added to simulation's agenda calling function `Simulation.addToAgenda(action, delay)`, `delay` is optional with default value 0. `Action`s have duration and when added to agenda, by default are assigned to different consecutive instants, taking as many instants as the duration time units. An `Action` with delay is programmed from the instance when the call to `addToAgenda()` is made, traversing forward in agenda as many instants as `delay` time units, followed by the instants corresponding to `Action`'s `duration`. If moving forward no instants are found yet, `Empty` ones will be created.
 

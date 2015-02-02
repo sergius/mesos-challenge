@@ -8,14 +8,14 @@ import scala.util.{Success, Try}
 trait Simulation {
 
   private var timeline = List.empty[Instant]
-  private var tmlnCursor = 0 //indicates the current instant: to be created or modified
+  private var timelineCursor = 0 //indicates the current instant: to be created or modified
   private var now = 0
 
   def currentTime = now
   def agenda = timeline
   def simReset(): Unit = {
     timeline = List.empty[Instant]
-    tmlnCursor = 0
+    timelineCursor = 0
     now = 0
   }
 
@@ -54,17 +54,19 @@ trait Simulation {
   }
 
   def run(): Unit = {
-    if (timeline isEmpty) println("*** Can't run, agenda empty")
+    if (timeline.isEmpty) println("*** Can't run, agenda empty")
     else {
       prepareForRun()
       runLoop()
     }
   }
 
-  def stepAgenda(): Unit = {
-    if (timeline isEmpty) println("*** Can't run, agenda empty")
-    else {
-      stepTimeline()
+  protected def stepAgenda(): List[String] = {
+    if (timeline.isEmpty) {
+      println("*** Can't run, agenda empty")
+      List.empty[String]
+    } else {
+      stepTimeline().map(e => e.name)
     }
   }
 
@@ -95,23 +97,23 @@ trait Simulation {
     else addForDuration()
 
     def addWithDelay(d: Int) = {
-      val currCursor = tmlnCursor
+      val currCursor = timelineCursor
       val advCursor = currCursor + d
 
       Try(timeline(advCursor)) match {
         case Success(instant) =>
-          tmlnCursor = advCursor
+          timelineCursor = advCursor
           addForDuration()
         case _ =>
           fillWithEmptyFor(delay)
           addForDuration()
       }
-      tmlnCursor = currCursor
+      timelineCursor = currCursor
 
       def fillWithEmptyFor(i: Int) = {
         0 until i foreach {
           t => { timeline :+= Instant.empty
-            tmlnCursor += 1 }
+            timelineCursor += 1 }
         }
       }
     }
@@ -120,13 +122,13 @@ trait Simulation {
       val newEvent: Event = Event(action.name, action.effect)
       val duration = action.duration
       0 until duration foreach { t => {
-          Try(timeline(tmlnCursor)) match {
+          Try(timeline(timelineCursor)) match {
             case Success(instant) =>
               instant.addEvent(newEvent)
             case _ =>
               timeline :+= Instant(newEvent)
           }
-          tmlnCursor += 1
+          timelineCursor += 1
         }
       }
     }
@@ -144,7 +146,7 @@ trait Simulation {
     case _ =>
   }
 
-  private def stepTimeline(): Unit = timeline match {
+  private def stepTimeline(): List[Event] = timeline match {
     case instant :: rest =>
       timeline = rest
       instant.events foreach {
@@ -152,7 +154,8 @@ trait Simulation {
           e.effect()
       }
       now += 1
-    case _ =>
+      instant.events
+    case _ => List.empty[Event]
   }
 
   private def printEvent(e: Event) =
