@@ -17,7 +17,7 @@ The most interesting part of the task is scheduling. The following algorithm has
 
 Every single elevator serves the requests, according to the following rules:
 
- 1. The first one is served first. FCFS
+ 1. The first to come is served first. FCFS
  2. As the elevator starts moving (either up or down) it will keep serving all the requests made in the same direction of movement. Obviously, with the condition that the requests must be received before elevator have passed the initial floor.
  3. The requests in the opposite direction aren't lost. They are being stored for next movement.
  4. When all the requests in one direction are served or the limit of movement is reached, the elevator starts moving in the opposite direction, serving all the requests stored before and those which are being made in time during the movement.
