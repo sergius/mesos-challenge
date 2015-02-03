@@ -4,9 +4,9 @@ import org.scalatest.{Matchers, WordSpecLike}
 
 class ElevatorControlCenterSpec extends WordSpecLike with Matchers {
 
-  "A pickup request" should {
+  "When Elevator Control Center receives a pickup request, it" should {
 
-    "be assigned to the only elevator available" in {
+    "with 1 elevator: assign it to the only elevator available" in {
       object el1 extends ElevatorControl(1) with Elevator with Simulation
 
       val ecc = new ElevatorControlCenter(List(el1))
@@ -30,7 +30,7 @@ class ElevatorControlCenterSpec extends WordSpecLike with Matchers {
 
     }
 
-    "be assigned to the elevator with least floors to traverse in order to reach pickup initFloor" in {
+    "with multiple elevators: assign to the elevator with least floors to traverse to reach initFloor" in {
       object el1 extends ElevatorControl(1) with Elevator with Simulation
       object el2 extends ElevatorControl(2) with Elevator with Simulation
       object el3 extends ElevatorControl(3) with Elevator with Simulation
@@ -57,6 +57,36 @@ class ElevatorControlCenterSpec extends WordSpecLike with Matchers {
 
       el1.movements(0).stops should contain inOrder(7, 5)
       el1.movements(1).stops should contain inOrder(6, 8, 10)
+
+    }
+
+    "with multiple elevators and pickup being out of range of elevators " +
+      "movements: assign to the one that approaches most" in {
+
+      object el1 extends ElevatorControl(1) with Elevator with Simulation
+      object el2 extends ElevatorControl(2) with Elevator with Simulation
+      object el3 extends ElevatorControl(3) with Elevator with Simulation
+
+      val ecc = new ElevatorControlCenter(List(el1, el2, el3))
+
+      val tf = 4 //top floor for elevators' movements
+      ecc.update(1, tf -3, List((tf - tf, tf - 1), (tf - 3, tf - 3), (tf - 2, tf - tf)))
+      ecc.update(2, tf - tf, List((tf - 1, tf - 3), (tf - 1, tf - tf), (tf - 3, tf -1)))
+      ecc.update(3, tf - 2, List((tf - 1, tf - tf), (tf - 2, tf), (tf, tf - tf))) // the one that reaches tf
+
+      el3.movements should have size 2
+
+      el3.movements(0).stops should contain inOrder(tf, tf - 1, tf - tf)
+      el3.movements(1).stops should contain inOrder(tf - 2, tf)
+
+      println(s"*** Movements before pickup: ${el3.allStops}")
+      ecc.pickup(tf + 2, tf + 6)
+
+      el3.movements should have size 2
+
+      println(s"*** Movements after pickup: ${el3.allStops}")
+      el3.movements(0).stops should contain inOrder(tf, tf - 1, tf - tf)
+      el3.movements(1).stops should contain inOrder(tf - 2, tf, tf + 2, tf + 6)
 
     }
 

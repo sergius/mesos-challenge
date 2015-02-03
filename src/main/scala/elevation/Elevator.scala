@@ -10,13 +10,12 @@ trait Elevator {
 
   /**
    * Time spent when moving, from one floor
-   * to another, the speed.
+   * to another (the speed).
    */
   val perFloorDuration = 1
 
   /**
-   * Time spent when making a stop, before
-   * moving on to the next stop.
+   * Time spent when making a stop
    */
   val perStopDuration = 1
 

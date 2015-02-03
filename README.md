@@ -13,28 +13,35 @@ The elevator only has 2 states: *stopped* and *in movement*. The elevator has no
 
 The most interesting part of the task is scheduling. The following algorithm has been chosen.
 
+A pickup request has two parameters: initial floor (`initFloor`) and destination floor (`destFloor`).
+
+*Note: Though we are mostly used to elevators which have the buttons panel inside, hence the elevator control never knows which will be the destination floor before the elevator arrive to the initial floor, we will assume that the situation is different: the buttons panel is where we are used to have (just one) "call" button. Thus, when calling the elevator, the person is actually supposed to press the destination floor button. Working on this problem reminded me that I have already actually seen an elevator like this in one governmental building in Madrid. Everything has a cost and with technological progress the priorities change. Perhaps this change is due to the fact that years ago the energy was cheap and the metal was expensive, so we had one button per elevator per plant, now the energy and waiting time is the more expensive and the metal is cheap and optimized, so we can have panels on every panel and save on energy and time.*
+
 #### One elevator
 
 Every single elevator serves the requests, according to the following rules:
 
  1. The first to come is served first. FCFS
- 2. As the elevator starts moving (either up or down) it will keep serving all the requests made in the same direction of movement. Obviously, with the condition that the requests must be received before the elevator has passed the request's initial floor.
+ 2. As the elevator starts moving (either up or down) it will keep serving all the requests made in the same direction of movement. Obviously, with the condition that the requests must be received before the elevator has passed the `initFloor`.
  3. The requests in the opposite direction aren't lost. They are being stored for next movement.
  4. When all the requests in one direction are served or the limit of movement is reached, the elevator starts moving in the opposite direction, serving all the requests stored before and those which are being made in time during the movement.
  5. The same routine keeps repeating while pickup requests are received.
 
 #### Multiple elevators
 
-When a pickup request arrives to a centre which controls several elevators, the pickup is assigned to the elevator with the shortest path to the pickup's initial floor. It's being computed the following way:
+When a pickup request arrives to a centre which controls several elevators, the pickup is assigned to the elevator with the shortest path to `initFloor`. It's being computed the following way:
 
- 1. Is being checked the condition that the pickup initial floor is situated between elevator's current floor and its next stop, taking the direction of movement into consideration. It means that the case when the described condition is `true` but the elevator moves in the direction opposite to the pickup, it counts as `false`
- 2. If the condition in p. 1 is `true`, the number of floors (difference between elevator's current floor and the pickup initial floor) is returned.
- 3. If the condition is `false`, the same is checked for the next step: checking if the pickup initial floor is situated between the next stop and the further one.
+ 1. Is being checked the condition that `initFloor` is situated between elevator's current floor and its next stop, taking the direction of movement into consideration. It means that the case when the described condition is `true` but the elevator moves in the direction opposite to the pickup, it counts as `false`
+ 2. If the condition in p. 1 is `true`, the number of floors (difference between elevator's current floor and the `initFloor`) is returned.
+ 3. If the condition is `false`, the same is checked for the next step: checking if `initFloor` is situated between the next stop and the further one.
  4. While the condition is `false` the number of floors is being accumulated.
  5. The same routine is repeated till the condition is `true` or the elevator has no more stops planned.
+ 6. Exceptions to the main rule:
+    6.1. If there is a stopped elevator on exactly the same floor as `initFloor`, this elevator is assigned
+    6.2. If the `initFloor` is situated out of the range of the movements of all elevators, the one whose stops come closest to `initFloor` will be assigned
 
 
- For example, we have an elevator with already `N` planned stops when it receives a pickup request `pickup(x, y)` (`x` is initial floor, `y` is destination floor)
+ For example, we have an elevator with already `N` planned stops when it receives a pickup request `pickup(x, y)` (`x` is `initFloor`, `y` is `destFloor`)
 
  1. Is being checked if the `currentFloor < x < nextStop1` (for a movement up, or ascending)
  2. Suppose it's not. Then we record the number `diff = (nextStop1 - currentFloor).abs` *(note that for descending direction the `diff` could result negative, therefore we count the absolute value of the difference)*
@@ -42,6 +49,8 @@ When a pickup request arrives to a centre which controls several elevators, the 
  4. Say the next time we check and discover that `nextStop2 < x < nextStop3` is `true`. Then we sum `diff += (x - nextStop2).abs` and `diff` will be the path which the elevator has to run before it could serve this pickup request.
 
  The elevator with the shortest path will be assigned the request.
+
+ An example for the exception rule 6.2: if we have `M` elevators and all of them have planned stops that don't exceed floor `x`, if a request with `initFloor = x +  3` comes in then the elevator whose stops reach floor `x` will be assigned this request. In case there are several elevators fulfilling this condition, the first one found will be returned. (This last detail might be optimised further.)
 
  *Note: In real dynamic conditions, this implementation might have a race condition problem. I would like to mention that an implementation for real world would execute these computations in parallel or, even better, the parallelism could be provided by an implementation based on an actors system, e.g. Akka.*
 
@@ -57,7 +66,7 @@ For convenience and as a way to watch the simulation's execution, traces (`print
 
 #### Programming a simulation
 
-*Note: the time is measured in conventional time units, which are just integer values and represent instants in the timeline of the simulation. The values of `duration` and `delay` are of this type. More than one event can be programmed for the same instant. Delays are available, but aren't used in the proposed application*
+*Note: the time is measured in conventional time units, which are just integer values and represent instants in the timeline of the simulation. The values of `duration` and `delay` are of this type. More than one event can be programmed for the same instant. `Delays` are available, but aren't used in the proposed application.*
 
 To program a simulation, actions should be added to simulation's agenda calling function `Simulation.addToAgenda(action, delay)`, `delay` is optional with default value 0. `Action`s have duration and when added to agenda, by default are assigned to different consecutive instants, taking as many instants as the duration time units. An `Action` with delay is programmed from the instance when the call to `addToAgenda()` is made, traversing forward in agenda as many instants as `delay` time units, followed by the instants corresponding to `Action`'s `duration`. If moving forward no instants are found yet, `Empty` ones will be created.
 

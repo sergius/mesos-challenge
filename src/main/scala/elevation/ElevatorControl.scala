@@ -11,9 +11,10 @@ abstract class ElevatorControl(val id: Int) {
   private var allMoves = List.empty[Movement]
   private val StopActionName = "Stopping"
   
-  def movements = allMoves
+  def movements: List[Movement] = allMoves
+  def allStops: List[Int] = allMoves.foldLeft(List.empty[List[Int]])((acc, m) => acc :+ m.stops).flatten
 
-  def getCurrentFloor = currentFloor
+  def getCurrentFloor: Int = currentFloor
   def setCurrentFloor(floor: Int): Unit = currentFloor = floor
   def perFloorDuration: Int
   def perStopDuration: Int

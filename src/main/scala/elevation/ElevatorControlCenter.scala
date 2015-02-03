@@ -34,7 +34,7 @@ class ElevatorControlCenter(val elevators: List[ElevatorControl]) {
   }
 
   /**
-   * Pickup call. If there is only one elevator available, the
+   * Represents a pickup request. If there is only one elevator available, the
    * request is automatically assigned to it. Otherwise, will
    * be selected the elevator with the shortest path
    * (less floors to traverse, in order to have the
@@ -49,28 +49,34 @@ class ElevatorControlCenter(val elevators: List[ElevatorControl]) {
       el.pickup(initFloor, destFloor)
       el.updateAgenda()
     } else {
-      val el: ElevatorControl =
-        shortestWait(elevators.map(el =>
-          findPath(el.movements.
-            foldLeft(List.empty[List[Int]])((acc, m) => acc :+ m.stops).flatten, (el, 0, false, el.getCurrentFloor))))
-      el.pickup(initFloor, destFloor)
-      el.updateAgenda()
+      elevators.find(e => (e.getCurrentFloor == initFloor) && e.movements.isEmpty) match {
+        case Some(e) =>
+          e.pickup(initFloor, destFloor)
+          e.updateAgenda()
+        case _ =>
+          val el: ElevatorControl =
+            shortestWait(elevators.map(el => findPath(el.allStops, (el, 0, false, el.getCurrentFloor))))
+          el.pickup(initFloor, destFloor)
+          el.updateAgenda()
+      }
     }
 
     def shortestWait(results: List[(ElevatorControl, Int, Boolean, Int)]): ElevatorControl =
       results.filter { case (_, _, b, _) => b}.minBy { case (el, floors, _, _) => floors}._1
 
-
     @tailrec
     def findPath(stops: List[Int], result: (ElevatorControl, Int, Boolean, Int)): (ElevatorControl, Int, Boolean, Int) =
       result match {
-        case (_, _, b, _) if b => result
-        case _ if stops.isEmpty => result
-        case (el, f, ok, _) => {
+        case (_, _, found, _) if found => result
+        case (el, 0, _, curr) if stops.isEmpty => (el, (initFloor - curr).abs, true, curr) // the stopped ones
+        case (el, _, _, curr) if stops.isEmpty => (el, minOutOfRange(el), true, curr) // out of range
+        case (el, f, ok, _) =>
           val (floors: Int, found: Boolean, curr: Int) = checkHead(stops, result._4)
           findPath(stops.tail, (el, floors + f, found || ok, curr))
-        }
       }
+
+    def minOutOfRange(el: ElevatorControl): (Int) =
+      (el.allStops.min - initFloor).abs.min(el.allStops.max - initFloor).abs
 
     def checkHead(stops: List[Int], curr: Int) = {
       val stop = stops.head
