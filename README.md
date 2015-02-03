@@ -1,6 +1,8 @@
 # Mesos-challenge
 
-## Second attack: development from scratch (centered in the algorithm, not simulation)
+## Second attack: development from scratch
+(centered in the algorithm, not simulation)
+
 *(package `elevation`)*
 
 
